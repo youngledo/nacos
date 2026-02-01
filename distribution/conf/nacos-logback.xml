@@ -715,6 +715,7 @@
     <logger name="com.alibaba.nacos.core.auth" additivity="false">
         <level value="DEBUG"/>
         <appender-ref ref="core-auth"/>
+        <appender-ref ref="CONSOLE"/>
     </logger>
 
     <logger name="com.alibaba.nacos.core.protocol.raft" additivity="false">

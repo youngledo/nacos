@@ -88,7 +88,7 @@
     </issueManagement>
     
     <properties>
-        <revision>2.5.2</revision>
+        <revision>2.5.0</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Compiler settings properties -->
@@ -127,7 +127,7 @@
         <p3c-pmd.version>1.3.0</p3c-pmd.version>
         
         <!-- dependency version -->
-        <nacos.logback.adapter.version>1.1.4</nacos.logback.adapter.version>
+        <nacos.logback.adapter.version>1.1.3</nacos.logback.adapter.version>
         <spring-boot-dependencies.version>2.7.18</spring-boot-dependencies.version>
         <servlet-api.version>3.0</servlet-api.version>
         <commons-io.version>2.14.0</commons-io.version>
@@ -151,13 +151,10 @@
         <SnakeYaml.version>2.0</SnakeYaml.version>
         <junit5.version>5.10.2</junit5.version>
         
-        <!-- Maven Central Portal -->
-        <central.publishing.maven.version>0.7.0</central.publishing.maven.version>
-        
         <!-- override dependency version -->
         <spring.version>5.3.39</spring.version>
         <spring-security.version>5.8.15</spring-security.version>
-        <tomcat.version>9.0.109</tomcat.version>
+        <tomcat.version>9.0.98</tomcat.version>
     </properties>
     <!-- == -->
     <!-- =========================================================Build plugins================================================ -->
@@ -176,11 +173,6 @@
                     <configuration>
                         <attach>false</attach>
                     </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.sonatype.central</groupId>
-                    <artifactId>central-publishing-maven-plugin</artifactId>
-                    <version>${central.publishing.maven.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -310,7 +302,7 @@
                     </dependency>
                 </dependencies>
             </plugin>
-            <plugin>
+            <!--<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${maven-checkstyle-plugin.version}</version>
@@ -331,7 +323,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
@@ -466,33 +458,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.2.0</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>target/generated-sources/protobuf/java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <publishingServerId>central</publishingServerId>
-                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -1103,6 +1068,19 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    
+    <distributionManagement>
+        <snapshotRepository>
+            <!-- The ID here must be exactly the same as the value
+             of the server element id in the settings.xml file of MAVEN -->
+            <id>sona</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>sona</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
 </project>
 

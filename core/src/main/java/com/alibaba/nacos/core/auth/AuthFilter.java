@@ -29,12 +29,10 @@ import com.alibaba.nacos.plugin.auth.api.IdentityContext;
 import com.alibaba.nacos.plugin.auth.api.Permission;
 import com.alibaba.nacos.plugin.auth.api.Resource;
 import com.alibaba.nacos.plugin.auth.exception.AccessException;
+import org.springframework.http.MediaType;
+import org.springframework.util.unit.DataSize;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -53,12 +51,14 @@ public class AuthFilter implements Filter {
     private final ControllerMethodsCache methodsCache;
     
     private final HttpProtocolAuthService protocolAuthService;
-    
-    public AuthFilter(AuthConfigs authConfigs, ControllerMethodsCache methodsCache) {
+    private final long maxPostSize;
+
+    public AuthFilter(AuthConfigs authConfigs, ControllerMethodsCache methodsCache, DataSize formSize) {
         this.authConfigs = authConfigs;
         this.methodsCache = methodsCache;
         this.protocolAuthService = new HttpProtocolAuthService(authConfigs);
         this.protocolAuthService.initialize();
+        this.maxPostSize = formSize.toBytes();
     }
     
     @Override
@@ -72,9 +72,11 @@ public class AuthFilter implements Filter {
         
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse resp = (HttpServletResponse) response;
-        
+
+        checkFormSize(req);
+
+
         try {
-            
             Method method = methodsCache.getMethod(req);
             
             if (method == null) {
@@ -93,6 +95,8 @@ public class AuthFilter implements Filter {
                 ServerIdentityResult serverIdentityResult = protocolAuthService.checkServerIdentity(req, secured);
                 switch (serverIdentityResult.getStatus()) {
                     case FAIL:
+                        Loggers.AUTH.error("Server identity check failed, request: {} {}, reason: {}",
+                                req.getMethod(), req.getRequestURI(), serverIdentityResult.getMessage());
                         resp.sendError(HttpServletResponse.SC_FORBIDDEN, serverIdentityResult.getMessage());
                         return;
                     case MATCHED:
@@ -128,16 +132,28 @@ public class AuthFilter implements Filter {
             }
             chain.doFilter(request, response);
         } catch (AccessException e) {
-            if (Loggers.AUTH.isDebugEnabled()) {
-                Loggers.AUTH.debug("access denied, request: {} {}, reason: {}", req.getMethod(), req.getRequestURI(),
-                        e.getErrMsg());
-            }
+            Loggers.AUTH.error("Access denied, request: {} {}, reason: {}",
+                    req.getMethod(), req.getRequestURI(), e.getErrMsg(), e);
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, e.getErrMsg());
         } catch (IllegalArgumentException e) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, ExceptionUtil.getAllExceptionMsg(e));
         } catch (Exception e) {
             Loggers.AUTH.warn("[AUTH-FILTER] Server failed: ", e);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server failed, " + e.getMessage());
+        }
+    }
+
+    /**
+     * Check the size of form parameters, see: <a href="https://github.com/alibaba/nacos/issues/14423">14423</a>
+     * @param request HttpServletRequest
+     */
+    private void checkFormSize(HttpServletRequest request) {
+        if (!MediaType.APPLICATION_FORM_URLENCODED.equals(MediaType.valueOf(request.getContentType()))) {
+            return;
+        }
+        int contentLength = request.getContentLength();
+        if ((maxPostSize >= 0) && (contentLength > maxPostSize)) {
+            throw new IllegalArgumentException("Request Entity Too Large!");
         }
     }
 }

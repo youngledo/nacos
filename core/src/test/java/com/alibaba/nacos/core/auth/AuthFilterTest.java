@@ -33,6 +33,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.util.unit.DataSize;
+import org.springframework.util.unit.DataUnit;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -40,15 +42,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * {@link AuthFilter} unit test.
@@ -78,7 +73,7 @@ class AuthFilterTest {
     
     @BeforeEach
     void setUp() {
-        authFilter = new AuthFilter(authConfigs, methodsCache);
+        authFilter = new AuthFilter(authConfigs, methodsCache, DataSize.of(2, DataUnit.MEGABYTES));
     }
     
     @AfterEach
